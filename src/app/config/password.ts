@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import passport from "passport";
 import {
   Strategy as GoogleStrategy,
@@ -7,7 +8,60 @@ import {
 import { envVars } from "./env";
 import { User } from "../modules/user/user.model";
 import { Role } from "../modules/user/user.interface";
+import { Strategy as LocalStrategy } from "passport-local";
 
+// email password / local authentication
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+    },
+    async (email: string, password: string, done) => {
+      try {
+        const isUserExist = await User.findOne({ email });
+
+        // if (!isUserExist) {
+        //   return done(null, false, { message: "User does not exist" });
+        // }
+
+        if (!isUserExist) {
+          return done("User does not exist");
+        }
+
+        const isGoogleAuthenticated = isUserExist.auths.some(
+          (providerObject) => providerObject.provider === "google"
+        );
+        if (isGoogleAuthenticated && !isUserExist.password) {
+          return done(null, false, {
+            message:
+              "You have authenticated through google login. So if you want to login with credentials, then at first login with google and set password for your gmail and then you can login email  and password.",
+          });
+        }
+
+        // if (isGoogleAuthenticated && !isUserExist.password) {
+        //   return done(
+        //     "You have authenticated through google login. So if you want to login with credentials, then at first login with google and set password for your gmail and then you can login email  and password."
+        //   );
+        // }
+
+        const isPasswordMatched = await bcrypt.compare(
+          password as string,
+          isUserExist.password as string
+        );
+        if (!isPasswordMatched) {
+          return done(null, false, { message: "Password does not match" });
+        }
+
+        return done(null, isUserExist);
+      } catch (error) {
+        done(error);
+      }
+    }
+  )
+);
+
+// google authentication
 passport.use(
   new GoogleStrategy(
     {
@@ -65,12 +119,12 @@ passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
   done(null, user._id);
 });
 
-passport.deserializeUser(async(id: string, done: any) => {
+passport.deserializeUser(async (id: string, done: any) => {
   try {
-    const user = await User.findById(id)
-    done(null, user)
+    const user = await User.findById(id);
+    done(null, user);
   } catch (error) {
-    console.log(error)
-    done(error)
+    console.log(error);
+    done(error);
   }
 });
