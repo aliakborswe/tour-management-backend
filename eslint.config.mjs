@@ -9,9 +9,9 @@ export default tseslint.config(
   tseslint.configs.strict,
   tseslint.configs.stylistic,
   {
-    rules : {
-        "no-console" : "warn",
-        "no-non-null-assertion" : "warn"
-    }
+    rules: {
+      "no-console": "warn",
+      "no-non-null-assertion": "warn",
+    },
   }
 );

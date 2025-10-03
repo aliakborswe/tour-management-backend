@@ -51,7 +51,7 @@ process.on("SIGINT", () => {
 });
 
 process.on("unhandledRejection", (err) => {
-  console.log("Unhandled Rejecttion detected... Server shutting down..", err);
+  console.log("Unhandled Rejection detected... Server shutting down..", err);
 
   if (server) {
     server.close(() => {
